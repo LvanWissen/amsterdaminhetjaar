@@ -37,6 +37,10 @@ if(isset($_GET['year'])){
 	
 </head>
 <body>
+
+<div id="bigimg"></div>
+
+
 <div id="timeline-wrapper"><div id="notimeline">
 
 	<?php 
@@ -52,7 +56,7 @@ if(isset($_GET['year'])){
 </div></div>
 
 <div class="container-fluid">
-	<h1>Amsterdam in <input value="<?= $year ?>" type="text" id="yearBox" name="yearBox" style="max-width:160px;"></h1>
+	<h1>Amsterdam in <input autofocus value="<?= $year ?>" type="text" id="yearBox" name="yearBox" style="max-width:160px;"></h1>
 
 </div>
 
@@ -66,18 +70,24 @@ if(isset($_GET['year'])){
 		<h2>Vroedschap</h2>
 		<div class="content" id="vroedschap"></div>
 
+		<h2>Gebouwd en verdwenen</h2>
+		<div class="content" id="gebouwdverdwenen"></div>
+
 		<h2>Gebeurtenissen</h2>
+		<div class="content" id="gebeurtenissen">
+			<p class="smaller">Tja, een gebeurtenissenoverzicht lijkt nog niet voorhanden te zijn, dat wil zeggen niet in gestructureerde vorm.</p>
+		</div>
+
+
 	</div>
 	<div class="col-md-4">
 		<h2>Stratenplan</h2>
-		<div class="content" style="display: block;" id="kaart">
-			<div id='map'></div>
-			<p class="smaller">
-				Een grotere kaart kleurt de leeftijd der straten in <?= $year ?>
-			</p>
-		</div>
+		<div class="content" id="kaart"></div>
 
 		<h2>Wijkindeling</h2>
+		<div class="content" id="wijkindeling">
+			<p class="smaller">Voor de wijken verwijzen we nu nog even naar <a target="_blank" href="https://adamlink.nl/geo/districts">Adamlink.nl/geo/districts</a>. Daar vind je overzichten van de huidige wijken en buurten, maar ook de 19e-eeuwse buurtindeling en de indeling van 1909.</p>
+		</div>
 
 
 		<h2>Straatbeelden</h2>
@@ -97,41 +107,24 @@ if(isset($_GET['year'])){
 
 		<h2>Over deze website</h2>
 		<div class="content" id="drievliegen">
-			<ul>
-				<li>Publieksapplicatie, een snelle 'Couleur Locale Temporale', portal naar meer</li>
-				<li>Toont welke data beschikbaar is (alle data live uit open bronnen)</li>
-				<li>Aanjager voor crowdsource-projecten (samen missende data aanvullen)</li>
-			</ul>
+			<p class="smaller">Met deze site willen we een snel overzicht geven van de Amsterdamse geschiedenis in willekeurig welk jaar - wie heeft het voor 't zeggen, hoe ziet de stad eruit en wat gebeurt er zoal op cultureel gebied?</p>
+
+			<p class="smaller">We gebruiken daarvoor online databronnen - het (beschikbaar) maken van goede data is een belangrijke doelstelling van de Amsterdam Time Machine. We verwijzen daarbij zoveel mogelijk naar API's en SPARQL endpoints. Vaardigheid in het schrijven van SPARQL queries is voor historici in de nabije toekomst waarschijnlijk net zo belangrijk als iets op kunnen diepen uit een archief.</p>
+
+			<p class="smaller">Niet alle data is compleet. We laten zien waar we samen verder kunnen (en moeten) bouwen aan het Amsterdamse datalandschap. Iedereen kan een bijdrage leveren - door een eigen dataset toegankelijker te maken bijvoorbeeld, of door op Wikidata data aan te vullen en verbeteren.</p>
 		</div>
 
 
 		<h2>Tentoonstellingen</h2>
-		<div class="content" id="tentoonstellingen"></div>
+		<div class="content" id="tentoonstellingen">
+			<p class="smaller">We zouden hier graag laten zien welke tentoonstellingen er in een bepaald jaar te zien waren en kijken nu of we dit voor elkaar kunnen krijgen. Suggesties en - liever nog - bijdragen zijn welkom!</p>
+		</div>
 	</div>
 </div>
 
 <script src="assets/jquery.timeliny.js"></script>
 
 <script>
-
-	var center = [52.369716,4.900029];
-	var zoomlevel = 12;
-	
-	var map = L.map('map', {
-        center: center,
-        zoom: zoomlevel,
-        minZoom: 6,
-        maxZoom: 20,
-        scrollWheelZoom: false
-    });
-
-	L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}{r}.{ext}', {
-	    attribution: 'Tiles <a href="http://stamen.com">Stamen Design</a> - Data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-	    subdomains: 'abcd',
-		minZoom: 0,
-		maxZoom: 20,
-		ext: 'png'
-	}).addTo(map);
 
 	
 
@@ -166,35 +159,90 @@ if(isset($_GET['year'])){
 			if(div.html()==""){
 				console.log('leeg!');
 
+				div.append('<div class="loader"></div>');
+
 				if(div.attr('id') == "afgebeeld"){
-					$('#afgebeeld').load('streetdepictions.php?year=<?= $year ?>');
+					$('#afgebeeld').load('streetdepictions.php?year=<?= $year ?>',function(){
+						//setImgClick();
+					});
+				}else if(div.attr('id') == "kaart"){
+					$('#kaart').load('stratenplan/stratenplan.php?year=<?= $year ?>', function(){
+						createMap();
+						refreshMap();
+					});
 				}else if(div.attr('id') == "vroedschap"){
 					$('#vroedschap').load('vroedschap.php?year=<?= $year ?>');
 				}else if(div.attr('id') == "boeken"){
-					$('#boeken').load('boeken.php?year=<?= $year ?>');
+					$('#boeken').load('boeken/boeken.php?year=<?= $year ?>');
 				}else if(div.attr('id') == "onstage"){
 					$('#onstage').load('onstage.php?year=<?= $year ?>');
-				}else if(div.attr('id') == "tentoonstellingen"){
-					$('#tentoonstellingen').load('tentoonstellingen.php?year=<?= $year ?>');
-				}else if(div.attr('id') == "hetweer"){
-					$('#hetweer').load('hetweer.php?year=<?= $year ?>');
 				}else if(div.attr('id') == "burgemeesters"){
-					$('#burgemeesters').load('burgemeesters.php?year=<?= $year ?>');
+					$('#burgemeesters').load('burgemeesters/burgemeesters.php?year=<?= $year ?>');
+				}else if(div.attr('id') == "gebouwdverdwenen"){
+					$('#gebouwdverdwenen').load('gebouwdverdwenen/gebouwdverdwenen.php?year=<?= $year ?>',function(){
+						//setImgClick();
+					});
 				}
 			}
 
 			div.toggle();
 		});
 
-		refreshMap();
+		//setImgClick();
+
+		$('#bigimg').click(function(){
+			$(this).hide();
+		});
 
 	});
 
+	function setImgClick(){
+		$('a img').click(function (e){
+			e.preventDefault();
+			var imglink = $(this).parent('a').attr('href');
+			var imgurl = $(this).attr('src');
+			var imgtitle = $(this).parent('a').attr('title');
+			var html = '<div class="bigimgcontent">';
+			html += '<img src="' + imgurl + '" /><br />';
+			if(typeof imgtitle !== 'undefined'){
+				html += imgtitle + '<br />';
+			}
+			html += '<a target="_blank" href="' + imglink + '">bekijk op ' + imglink + '</a>';
+			html += '</div>';
+			$('#bigimg').html(html);
+			$('#bigimg').show();
+		});
+	}
+
+	function createMap(){
+		center = [52.369716,4.900029];
+		zoomlevel = 13;
+		
+		map = L.map('map', {
+	        center: center,
+	        zoom: zoomlevel,
+	        minZoom: 6,
+	        maxZoom: 20,
+	        scrollWheelZoom: false
+	    });
+
+		L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+			id: 'CartoDB.DarkMatterNoLabels',
+			minZoom: 0,
+			maxZoom: 20,
+			ext: 'png'
+		}).addTo(map);
+
+	
+	}
+
 	function refreshMap(){
+		console.log('start refreshing...');
 		$.ajax({
 	        type: 'GET',
 	        url: '/data/geojson/streetsperyear.php?year=<?= $year ?>',
-	        dataType: 'json',
+		    dataType: 'json',
 	        success: function(jsonData) {
 
 	            if (typeof streets !== 'undefined') {
@@ -203,20 +251,14 @@ if(isset($_GET['year'])){
 
 	            streets = L.geoJson(null, {
 	            	pointToLayer: function (feature, latlng) {                    
-		                return new L.CircleMarker(latlng, {
-		                    radius: 3,
-		                    color: "#E95C90",
-		                    weight: 1,
-		                    opacity: 1,
-		                    fillOpacity: 0.3
-		                });
+		                return false;
 		            },
 				    style: function(feature) {
 				        return {
-				            color: '#E95C90',
+				            color: getColor(feature.properties.street_since_min),
 				            weight: 1,
 				            opacity: 1,
-				            clickable: true
+				            clickable: false
 				        };
 				    },
 				    onEachFeature: function(feature, layer) {
@@ -239,6 +281,20 @@ if(isset($_GET['year'])){
 	    });
 	}
 
+	function getColor(streetyear) {
+		var now = <?= $year ?>;
+		var d = now - streetyear;
+	    return d > 400 ? '#a50026' :
+	           d > 240 ? '#f46d43' :
+	           d > 120  ? '#fdae61' :
+	           d > 60  ? '#fee090' :
+	           d > 30  ? '#ffffbf' :
+	           d > 20  ? '#abd9e9' :
+	           d > 10   ? '#74add1' :
+	                     '#4575b4';
+	}
+
+
 	function whenStreetClicked(){
 		console.log('clicked');
 	}
@@ -253,6 +309,7 @@ if(isset($_GET['year'])){
 			location.href = 'index.php?year=' + gotoyear;
 		}
 	});
+
 
 </script>
 
